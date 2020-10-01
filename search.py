@@ -40,76 +40,90 @@ graph = {           #graph dictionary
         "Vaslui": {"Iasi":92, "Urziceni":98},
         "Zerind": {"Oradea": 71, "Arad": 75}
         }
+line_of_sight = {               #line of sight distance
+    "Arad":366,
+    "Bucharest":0,
+    "Craiova": 160,
+    "Dobreta": 242,
+    "Eforie": 161,
+    "Fagaras": 178,
+    "Giurgiu": 77,
+    "Hirsova": 151,
+    "Iasi": 226,
+    "Lugoj": 244,
+    "Mehadia": 241,
+    "Neamt": 234,
+    "Oradea": 380,
+    "Pitesti": 98,
+    "Rimnicu Vilcea": 193,
+    "Sibiu": 253,
+    "Timisoara": 329,
+    "Urziceni": 80,
+    "Vaslui": 199,
+    "Zerind": 374
+}
 
 # make a list of the cities
 cities = list(graph.keys())
 # set start and end nodes
-start_node = "Bucharest"
-goal_node = "Timisoara"
+start_node = "Oradea"
+goal_node = "Bucharest"
 
-def DFS(src, goal):
-    """ Implement depth first search of the graph using a stack """
-    visited = {}
-    path = []
-    stack = []
+def guess_function(prev, stack):        #used for DFS heuristic
+    distance = {}
+
+    for items in stack:                 #dictionary used to sum up the distances with the line of sight
+        distance.update({(graph[prev][items]+line_of_sight[items]):items})
+   
+    #print("Min", stack)
+    return distance[min(distance)] #return city with minimum distance
+
+def aStar(start, end):            #DFS
+    stack = []                  #stack for putting nodes
+    visited = {}                #dictionary where key is the city and their values are boolean
+    path = []                   #Path to destination
     distance = 0
+    previous = ""
 
-    # add the inital node to the stack
-    stack.append(src)
+    stack.append(start)         #stack to start
 
-    for city in cities:
-        visited.update({city: False})
+    for city in cities:         #set all nodes to unvisited
+        visited.update({city:False})
 
     while(len(stack)):
-        node = stack.pop(len(stack)-1)
-        # check if visited, mark as visited if not
-        if(visited[node] == False):
+        print(path + stack)
+        if (len(stack)>1):
+            node = guess_function(previous,stack)   #get the minimum based on distance
+            stack = []
+        else:
+            node = stack.pop()
+
+        if (visited[node] == False):    #if not visited then make true
             visited[node] = True
-            # update the path
-            path.append(node)
-            # GOAL IS REACHED
-            if(visited[goal]):
-                print("DFS Path:", path)
+            if (len(path) > 0):         #add the distances if the path > 0
+                #print ("path",path)
+                previous = path[-1]
+                distance += graph[previous][node]
+                # print distance
+            
+            path.append(node)       #add to path
+            
+            if (visited[end]):          #reached destination? then end
+                #print("\nA* Search")
+                print("Path:",path)
+                print("Distance:", distance, "\n")
                 break
-            # add the neighbors to the stack
+            
             for adj in graph[node]:
-                if(visited[adj] == False):
+                if (visited[adj] == False):         #add the 
                     stack.append(adj)
-
-def BFS(src, goal):
-    """ Implement breadth-first search of the given graph using a queue"""
-    visited = {}
-    path = []
-    queue = []
-    distance = 0
-
-    # add the inital node to the queue
-    queue.append(src)
-    # mark all as unvisted
-    for city in cities:
-        visited.update({city: False})
-
-    while(len(queue)):
-        node = queue.pop(0)
-        # mark as visited
-        if(visited[node] == False):
-            visited[node] = True
-
-            path.append(node)           # update path
-            # GOAL REACHED
-            if(visited[goal]):
-                print("BFS Path:", path)
-                break
-            # add neighbors(adj nodes) to the queue
-            for adj in graph[node]:
-                if(visited[adj] == False):
-                    queue.append(adj)
+        previous = node
 
 def djikstra(graph,src,dest, visited=[],distances={},predecessors={}):
     if src == dest:
         # build the shortest path
         path = []
-        pred= dest
+        pred = dest
         while pred != None:
             path.append(pred)
             pred = predecessors.get(pred, None)
@@ -134,20 +148,19 @@ def djikstra(graph,src,dest, visited=[],distances={},predecessors={}):
         for k in graph:
             if k not in visited:
                 unvisited[k] = distances.get(k, float('inf'))
-
+        print(visited)
         next = min(unvisited, key = unvisited.get)
         # recurse !!
         djikstra(graph, next, dest, visited, distances, predecessors)
 
 
 
-DFS(start_node, goal_node)
-BFS(start_node, goal_node)
-print("\n")
-
-for city in cities:
-    djikstra(graph, "Bucharest", city)
-
+#DFS(start_node, goal_node)
+#BFS(start_node, goal_node)
+print("\nDijikstra: ")
+djikstra(graph, start_node, goal_node)
+print("A* search: ")
+aStar(start_node, goal_node)
 
 
 
